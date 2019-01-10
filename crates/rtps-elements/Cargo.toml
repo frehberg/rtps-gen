@@ -1,0 +1,19 @@
+[package]
+name = "rtps-elements"
+version = "0.1.0"
+authors = ["Frank Rehberger <frehberg@gmail.com>"]
+edition = "2018"
+description = "Core message data structures generated from RTPS IDL."
+license = "Apache-2.0"
+readme = "README.md"
+keywords = ["RTPS", "DDS", "data-centric", "IDL", "generator"]
+documentation = "https://docs.rs/rtps-gen"
+homepage = "https://github.com/frehberg/rtps-gen.git"
+repository = "https://github.com/frehberg/rtps-gen.git"
+
+[dependencies]
+serde = "1.0"
+serde_derive = "1.0"
+
+[build-dependencies]
+rtps-idl = { path = "../rtps-idl", version = "0.1.0" }

@@ -1,0 +1,134 @@
+/*
+ *
+ *
+ * Distributed under the OpenDDS License.
+ * See: http://www.opendds.org/license.html
+ */
+
+#ifndef OPENDDS_DCPS_INFO_UTILS_IDL
+#define OPENDDS_DCPS_INFO_UTILS_IDL
+#include "dds/DdsDcpsCore.idl"
+#include "dds/DdsDcpsGuid.idl"
+
+module OpenDDS
+{
+  module DCPS
+  {
+    // These are unique across a domain
+    // They are also the InstanceHandle_t in Sample_Info for built-in Topics
+    typedef GUID_t RepoId;
+
+    typedef DDS::OctetSeq TransportBLOB;
+
+    struct TransportLocator {
+      /// The transport type (e.g. tcp or udp)
+      string transport_type;
+      /// Information about the transport instance that is opaque to all but
+      /// code specific to that transport implementation.
+      TransportBLOB data;
+    };
+
+    typedef sequence<TransportLocator> TransportLocatorSeq;
+
+    struct IncompatibleQosStatus {
+      long total_count;
+      long count_since_last_send;
+      DDS::QosPolicyId_t last_policy_id;
+      DDS::QosPolicyCountSeq policies;
+    };
+
+    // Information returned from call to add_domain_participant()
+    struct AddDomainStatus {
+      RepoId  id;
+      boolean federated;
+    };
+
+    // Status returned by a topic operation
+    enum TopicStatus {
+      CREATED,
+      ENABLED,
+      FOUND,
+      NOT_FOUND,
+      REMOVED,
+      CONFLICTING_TYPENAME,
+      PRECONDITION_NOT_MET,
+      INTERNAL_ERROR
+    };
+
+    struct WriterAssociation {
+      TransportLocatorSeq writerTransInfo;
+      RepoId writerId;
+      ::DDS::PublisherQos pubQos;
+      ::DDS::DataWriterQos writerQos;
+    };
+
+    struct ReaderAssociation {
+      TransportLocatorSeq readerTransInfo;
+      RepoId readerId;
+      ::DDS::SubscriberQos subQos;
+      ::DDS::DataReaderQos readerQos;
+      string filterClassName;
+      string filterExpression;
+      ::DDS::StringSeq exprParams;
+    };
+
+    typedef sequence<RepoId> WriterIdSeq;
+
+    typedef sequence<RepoId> ReaderIdSeq;
+
+    typedef octet OctetArray16[16];
+
+    /* Type used to represent the addressing information needed to send a
+       message to an RTPS Endpoint */
+    struct Locator_t {
+      long kind;
+      unsigned long _port;
+      OctetArray16 address;
+    };
+
+    typedef sequence<Locator_t> LocatorSeq;
+
+    typedef string<256> String256;
+
+    /* information to enable content filtering */
+    struct ContentFilterProperty_t {
+      String256 contentFilteredTopicName;
+      String256 relatedTopicName;
+      String256 filterClassName;
+      string filterExpression;
+      DDS::StringSeq expressionParameters;
+    };
+
+    struct ReaderProxy_t {
+      GUID_t remoteReaderGuid;  // optional in DiscoveredReaderData
+      boolean expectsInlineQos;
+      LocatorSeq unicastLocatorList;
+      LocatorSeq multicastLocatorList;
+      TransportLocatorSeq allLocators;
+      GUIDSeq associatedWriters;
+    };
+
+    // top-level data type for SEDPbuiltinSubscriptions
+    struct DiscoveredReaderData {
+      DDS::SubscriptionBuiltinTopicData ddsSubscriptionData;
+      ReaderProxy_t readerProxy;
+      ContentFilterProperty_t contentFilterProperty;
+    };
+
+    struct WriterProxy_t {
+      GUID_t remoteWriterGuid;  // optional in DiscoveredWriterData
+      LocatorSeq unicastLocatorList;
+      LocatorSeq multicastLocatorList;
+      TransportLocatorSeq allLocators;
+    };
+
+    // top-level data type for SEDPbuiltinPublications
+    struct DiscoveredWriterData {
+      DDS::PublicationBuiltinTopicData ddsPublicationData;
+      WriterProxy_t writerProxy;
+    };
+
+  }; // module DDS
+}; // module OpenDDS
+
+#endif /* OPENDDS_DCPS_INFO_UTILS_IDL */
