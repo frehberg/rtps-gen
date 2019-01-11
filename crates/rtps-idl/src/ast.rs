@@ -16,8 +16,6 @@ const ATTR_DERIVE_SERDE: &str = "#[derive(Serialize, Deserialize)]";
 const ATTR_DERIVE_CLONE_DEBUG: &str = "#[derive(Clone, Debug)]";
 const ATTR_ALLOW_NON_CAMEL_CASE_TYPES: &str = "#[allow(non_camel_case_types)]";
 const ATTR_ALLOW_NON_SNAKE_CASE: &str = "#[allow(non_snake_case)]";
-const ATTR_ALLOW_NON_UPPER_CASE_GLOBALS: &str = "#[allow(non_upper_case_globals)]";
-
 const IMPORT_SERDE: &str = "use serde_derive::{Serialize, Deserialize};";
 const ATTR_ALLOW_UNUSED_IMPORTS: &str = "#[allow(unused_imports)]";
 
@@ -27,7 +25,6 @@ impl UnaryOp {
             UnaryOp::Neg => write!(out, "-"),
             UnaryOp::Pos => write!(out, "+"),
             UnaryOp::Inverse => write!(out, "~"),
-            _ => unimplemented!(),
         };
         Ok(())
     }
@@ -62,7 +59,6 @@ impl BinaryOp {
             BinaryOp::Or => write!(out, "|"),
             BinaryOp::Xor => write!(out, "^"),
             BinaryOp::And => write!(out, "&"),
-            _ => unimplemented!(),
         };
         Ok(())
     }
@@ -79,11 +75,11 @@ impl IdlScopedName {
         for (idx, comp) in components.iter().enumerate() {
             // TODO, use paths according to "crate::" or "super::"
             if idx == 0 && !is_absolute_path {
-                write!(out, "{}", comp);
+                let _ = write!(out, "{}", comp);
             } else if idx == 0 && is_absolute_path {
-                write!(out, "crate::{}", comp);
+                let _ = write!(out, "crate::{}", comp);
             } else {
-                write!(out, "::{}", comp);
+                let _ = write!(out, "::{}", comp);
             }
         }
         Ok(())
@@ -98,9 +94,9 @@ pub enum IdlValueExpr {
     HexLiteral(String),
     OctLiteral(String),
     CharLiteral(String),
-    WCharLiteral(String),
+    WideCharLiteral(String),
     StringLiteral(String),
-    WStringLiteral(String),
+    WideStringLiteral(String),
     BooleanLiteral(bool),
     FloatLiteral(Option<String>, Option<String>, Option<String>, Option<String>),
     UnaryOp(UnaryOp, Box<IdlValueExpr>),
@@ -118,14 +114,13 @@ impl IdlValueExpr {
             IdlValueExpr::HexLiteral(ref val) => write!(out, "{}", val),
             IdlValueExpr::OctLiteral(ref val) => write!(out, "{}", val),
             IdlValueExpr::CharLiteral(ref val) => write!(out, "{}", val),
-            IdlValueExpr::WCharLiteral(ref val) => write!(out, "{}", val),
+            IdlValueExpr::WideCharLiteral(ref val) => write!(out, "{}", val),
             IdlValueExpr::StringLiteral(ref val) => write!(out, "{}", val),
-            IdlValueExpr::WStringLiteral(ref val) => write!(out, "{}", val),
+            IdlValueExpr::WideStringLiteral(ref val) => write!(out, "{}", val),
             IdlValueExpr::BooleanLiteral(val) => write!(out, "{}", val),
             //            FloatLiteral(ref integ => write!(out, "{}", val), ref fract, ref expo, ref suffix) => write!(out, "{}", val),
             IdlValueExpr::UnaryOp(op, ref expr) => op.write(out).and_then(|_| expr.write(out)),
             IdlValueExpr::BinaryOp(op, ref expr) => op.write(out).and_then(|_| expr.write(out)),
-            IdlValueExpr::Expr(ref expr1, ref expr2) => expr1.write(out).and_then(|_| expr2.write(out)),
             IdlValueExpr::Expr(ref expr1, ref expr2) => expr1.write(out).and_then(|_| expr2.write(out)),
             IdlValueExpr::Brace(ref expr) => write!(out, "{}", "(")
                 .and_then(|_| expr.write(out))
@@ -160,10 +155,9 @@ pub struct IdlStructMember {
 impl IdlStructMember {
     ///
     pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
-        write!(out, "{:indent$}{}: ", "", self.id, indent = level * INDENTION);
-        self.type_spec.write(out);
-        writeln!(out, ",");
-        Ok(())
+        write!(out, "{:indent$}{}: ", "", self.id, indent = level * INDENTION)
+            .and_then(|_| self.type_spec.write(out))
+            .and_then(|_| writeln!(out, ","))
     }
 }
 
@@ -178,10 +172,9 @@ pub struct IdlSwitchElement {
 impl IdlSwitchElement {
     ///
     pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
-        write!(out, "{:indent$}{}: ", "", self.id, indent = level * INDENTION);
-        self.type_spec.write(out);
-        writeln!(out, ",");
-        Ok(())
+        write!(out, "{:indent$}{}: ", "", self.id, indent = level * INDENTION)
+            .and_then(|_| self.type_spec.write(out))
+            .and_then(|_| writeln!(out, ","))
     }
 }
 
@@ -189,7 +182,7 @@ impl IdlSwitchElement {
 #[derive(Clone, Debug)]
 pub enum IdlSwitchLabel {
     Label(Box<IdlValueExpr>),
-    Default
+    Default,
 }
 
 ///
@@ -202,7 +195,7 @@ pub struct IdlSwitchCase {
 ///
 impl IdlSwitchCase {
     ///
-    pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
+    pub fn write<W: Write>(&self, _: &mut W, _: usize) -> Result<(), Error> {
         Ok(())
     }
 }
@@ -222,11 +215,9 @@ pub enum IdlTypeSpec {
     F32Type,
     F64Type,
     F128Type,
-    I8Type,
     I16Type,
     I32Type,
     I64Type,
-    U8Type,
     U16Type,
     U32Type,
     U64Type,
@@ -249,11 +240,9 @@ impl IdlTypeSpec {
             IdlTypeSpec::F32Type => write!(out, "f32"),
             IdlTypeSpec::F64Type => write!(out, "f64"),
             IdlTypeSpec::F128Type => write!(out, "f128"),
-            IdlTypeSpec::I8Type => write!(out, "i8"),
             IdlTypeSpec::I16Type => write!(out, "i16"),
             IdlTypeSpec::I32Type => write!(out, "i32"),
             IdlTypeSpec::I64Type => write!(out, "i64"),
-            IdlTypeSpec::U8Type => write!(out, "u8"),
             IdlTypeSpec::U16Type => write!(out, "u16"),
             IdlTypeSpec::U32Type => write!(out, "u32"),
             IdlTypeSpec::U64Type => write!(out, "u64"),
@@ -264,20 +253,22 @@ impl IdlTypeSpec {
             IdlTypeSpec::StringType(None) => write!(out, "String"),
             IdlTypeSpec::WideStringType(None) => write!(out, "String"),
             // TODO implement String/Sequence bounds
-            IdlTypeSpec::StringType(Some(ref val_expr)) => write!(out, "String"),
-            IdlTypeSpec::WideStringType(Some(ref val_expr)) => write!(out, "String"),
+            IdlTypeSpec::StringType(_) => write!(out, "String"),
+            // TODO implement String/Sequence bounds for serializer and deserialzer
+            IdlTypeSpec::WideStringType(_) => write!(out, "String"),
             IdlTypeSpec::SequenceType(typ_expr, _) => {
-                write!(out, "Vec<");
-                typ_expr.as_ref().write(out);
-                write!(out, ">")
+                write!(out, "Vec<")
+                    .and_then(|_| typ_expr.as_ref().write(out))
+                    .and_then(|_| write!(out, ">"))
             }
             IdlTypeSpec::ArrayType(typ_expr, dim_expr_list) => {
-                for _ in dim_expr_list { write!(out, "["); }
-                typ_expr.as_ref().write(out);
+                for _ in dim_expr_list { let _ = write!(out, "["); }
+                let _ = typ_expr.as_ref().write(out);
                 for dim_expr in dim_expr_list {
-                    write!(out, ";");
-                    dim_expr.as_ref().write(out);
-                    write!(out, "]");
+                    // TODO return result
+                    let _ = write!(out, ";")
+                        .and_then(|_| dim_expr.as_ref().write(out))
+                        .and_then(|_| write!(out, "]"));
                 }
                 Ok(())
             }
@@ -321,17 +312,19 @@ impl IdlTypeDcl {
     pub fn write<W: Write>(&mut self, out: &mut W, level: usize) -> Result<(), Error> {
         match self.0 {
             IdlTypeDclKind::TypeDcl(ref id, ref type_spec) => {
+                // TODO collect/return result
                 let _ = writeln!(out, "");
                 let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}{}", "", ATTR_ALLOW_DEADCODE, indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}{}", "", ATTR_ALLOW_NON_CAMEL_CASE_TYPES, indent = level * INDENTION);
                 let _ = write!(out, "{:indent$}pub type {} = ", "", id, indent = level * INDENTION);
-                type_spec.as_ref().write(out);
+                let _ = type_spec.as_ref().write(out);
                 let _ = writeln!(out, ";");
                 Ok(())
             }
             IdlTypeDclKind::StructDcl(ref id, ref type_spec) => {
+                // TODO collect/return result
                 let _ = writeln!(out, "");
                 let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
@@ -341,13 +334,14 @@ impl IdlTypeDcl {
                 let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_CLONE_DEBUG, indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}pub struct {} {}", "", id, "{", indent = level * INDENTION);
                 for member in type_spec {
-                    member.as_ref().write(out, level + 1);
+                    let _ = member.as_ref().write(out, level + 1);
                 }
                 let _ = writeln!(out, "{:indent$}{}", "", "}", indent = level * INDENTION);
                 Ok(())
             }
 
-            IdlTypeDclKind::UnionDcl(ref id, ref type_spec, ref switch_cases) => {
+            IdlTypeDclKind::UnionDcl(ref id, ref _type_spec, ref switch_cases) => {
+                // TODO collect/return result
                 let _ = writeln!(out, "");
                 let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
@@ -357,7 +351,7 @@ impl IdlTypeDcl {
                 let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_CLONE_DEBUG, indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}pub enum {} {}", "", id, "{", indent = level * INDENTION);
                 for case in switch_cases {
-                    case.write(out, level + 1);
+                    let _ = case.write(out, level + 1);
                 }
                 let _ = writeln!(out, "{:indent$}{}", "", "}", indent = level * INDENTION);
 

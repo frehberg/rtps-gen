@@ -6,7 +6,6 @@ use pest::Parser;
 use pest::iterators::{Pair, Pairs};
 use pest_idl_v4_grammar::{IdlParser, Rule};
 use std::collections::HashMap;
-use std::path::Path;
 use std::io::{Error, ErrorKind};
 use std::io::{Write, Read};
 use std::fs::File;
@@ -54,7 +53,7 @@ impl Default for Configuration {
 }
 
 ///
-pub fn load_idl(config: &Configuration, path: &str) -> Result<String, Error> {
+pub fn load_idl(_config: &Configuration, _path: &str) -> Result<String, Error> {
     return Ok("".to_owned());
 }
 
@@ -266,7 +265,6 @@ impl<'i> Context<'i> {
     fn read_identifier(&mut self, scope: &mut Scope,
                        pair: &Pair<Rule>) -> Result<String, IdlError>
     {
-        let iter = pair.clone().into_inner();
         if self.config.verbose {
             print!("{:indent$}", "", indent = 3 * scope.len());
             println!("{:?}", pair.as_rule());
@@ -281,7 +279,7 @@ impl<'i> Context<'i> {
     fn read_scoped_name(&mut self, scope: &mut Scope,
                         pair: &Pair<Rule>) -> Result<IdlScopedName, IdlError>
     {
-        let mut iter = pair.clone().into_inner();
+        let iter = pair.clone().into_inner();
         if self.config.verbose {
             print!("{:indent$}", "", indent = 3 * scope.len());
             println!(">>> {:?} '{}'", pair.as_rule(), pair.as_str());
@@ -329,7 +327,12 @@ impl<'i> Context<'i> {
                 (Some(ref unary_op), Some(ref prim_expr)) => {
                     // TBD
                     let expr = self.read_const_expr(scope, prim_expr)?;
-                    Ok(Box::new(IdlValueExpr::UnaryOp(UnaryOp::Pos, expr)))
+                    match unary_op.as_str() {
+                        "-" => Ok(Box::new(IdlValueExpr::UnaryOp(UnaryOp::Neg, expr))),
+                        "+" => Ok(Box::new(IdlValueExpr::UnaryOp(UnaryOp::Pos, expr))),
+                        "~" => Ok(Box::new(IdlValueExpr::UnaryOp(UnaryOp::Inverse, expr))),
+                        _ => Err(IdlError::ExpectedItem(Rule::unary_operator))
+                    }
                 }
                 (Some(ref prim_expr), None) => {
                     self.read_const_expr(scope, prim_expr)
@@ -405,6 +408,12 @@ impl<'i> Context<'i> {
             },
             Rule::character_literal =>
                 Ok(Box::new(IdlValueExpr::CharLiteral(pair.as_str().to_owned()))),
+            Rule::wide_character_literal =>
+                Ok(Box::new(IdlValueExpr::WideCharLiteral(pair.as_str().to_owned()))),
+            Rule::string_literal =>
+                Ok(Box::new(IdlValueExpr::StringLiteral(pair.as_str().to_owned()))),
+            Rule::wide_string_literal =>
+                Ok(Box::new(IdlValueExpr::WideStringLiteral(pair.as_str().to_owned()))),
             _ => self.read_const_expr(scope, &iter.next().unwrap()),
         }
     }
@@ -428,9 +437,7 @@ impl<'i> Context<'i> {
 
                 let type_dcl = Box::new(
                     IdlTypeDcl(IdlTypeDclKind::TypeDcl(id.clone(), type_spec.clone())));
-                self.add_type_dcl(scope, id, type_dcl);
-
-                Ok(())
+                self.add_type_dcl(scope, id, type_dcl)
             }
 
             // array_declarator = { identifier ~ fixed_array_size+ }
@@ -450,8 +457,7 @@ impl<'i> Context<'i> {
                     Box::new(IdlTypeSpec::ArrayType(type_spec.clone(), array_sizes?));
                 let type_dcl = Box::new(
                     IdlTypeDcl(IdlTypeDclKind::TypeDcl(id, array_type_spec)));
-                self.add_type_dcl(scope, key, type_dcl);
-                Ok(())
+                self.add_type_dcl(scope, key, type_dcl)
             }
 
             // traverse deeper
@@ -478,10 +484,10 @@ impl<'i> Context<'i> {
                 let _ = self.lookup_module(scope);
 
                 for p in iter {
-                    self.process::<L>(scope, loader, &p);
+                    let _ = self.process::<L>(scope, loader, &p);
                 }
 
-                scope.pop();
+                let _ = scope.pop();
 
                 Ok(())
             }
@@ -524,7 +530,7 @@ impl<'i> Context<'i> {
                 let any_declarators_pair = &iter.next().unwrap();
 
                 for p in any_declarators_pair.clone().into_inner() {
-                    self.process_declarator(scope, &p, &type_spec);
+                    let _ = self.process_declarator(scope, &p, &type_spec);
                 }
                 Ok(())
             }
@@ -546,7 +552,7 @@ impl<'i> Context<'i> {
                     Some(ref p) => {
                         let fname = p.as_str();
                         let data = loader.load(fname)
-                            .map_err(|err| IdlError::FileNotFound(fname.to_owned()))?;
+                            .map_err(|_| IdlError::FileNotFound(fname.to_owned()))?;
 
                         let idl: Pairs<Rule> =
                             IdlParser::parse(Rule::specification, &data)
@@ -555,7 +561,7 @@ impl<'i> Context<'i> {
                         for p in idl {
                             self.process::<L>(scope, loader, &p)?;
                         }
-                    },
+                    }
                     _ => {}
                 }
                 Ok(())
@@ -565,7 +571,7 @@ impl<'i> Context<'i> {
             // anything else
             _ => {
                 for p in iter {
-                    self.process::<L>(scope, loader, &p);
+                    let _ = self.process::<L>(scope, loader, &p);
                 }
                 Ok(())
             }
@@ -657,7 +663,7 @@ impl<'i> Context<'i> {
     fn read_switch_body(&mut self, scope: &mut Scope,
                         pair: &Pair<Rule>) -> Result<Vec<IdlSwitchCase>, IdlError>
     {
-        let mut iter = pair.clone().into_inner();
+        let iter = pair.clone().into_inner();
         if self.config.verbose {
             print!("{:indent$}", "", indent = 3 * scope.len());
             println!("{:?}", pair.as_rule());
@@ -725,7 +731,6 @@ pub fn generate_with_loader<W: Write, L: IdlLoader>(
     loader: &mut L,
     config: &Configuration,
     idldecl: &str) -> Result<(), IdlError> {
-    const ROOT: &str = "";
     let mut ctx = Context::new(config);
 
     let idl: Pairs<Rule> =
@@ -735,11 +740,11 @@ pub fn generate_with_loader<W: Write, L: IdlLoader>(
     let mut scope = Scope::new();
 
     for p in idl {
-        ctx.process::<L>(&mut scope, loader, &p);
+        let _ = ctx.process::<L>(&mut scope, loader, &p);
     }
 
-    out.write(MODULE_PRELUDE);
-    ctx.root_module.as_mut().write(out, 0).map_err(|err| IdlError::InternalError)
+    let _ = out.write(MODULE_PRELUDE);
+    ctx.root_module.as_mut().write(out, 0).map_err(|_| IdlError::InternalError)
 }
 
 

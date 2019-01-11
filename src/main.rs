@@ -9,8 +9,6 @@ use getopts::Options;
 use std::env;
 use std::collections::HashMap;
 
-const IDL_DIR: &str = "./files/";
-
 #[derive(Debug, Clone, Default)]
 struct Loader {
     search_path: Vec<String>,
@@ -99,7 +97,7 @@ fn main() -> Result<(), std::io::Error> {
 
     let data =
         load_from(&env::current_dir().unwrap(), &infile)
-            .map_err(|err| Error::new(ErrorKind::NotFound, ""))?;
+            .map_err(|_| Error::new(ErrorKind::NotFound, ""))?;
 
     let config = Configuration::new(defs, matches.opt_present("v"));
 
