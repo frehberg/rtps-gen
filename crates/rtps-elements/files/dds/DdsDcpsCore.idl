@@ -8,21 +8,17 @@
 #ifndef OPENDDS_DCPS_CORE_IDL
 #define OPENDDS_DCPS_CORE_IDL
 
-// The includes below are needed to deal with compilers that
-// have ACE_HAS_EXPLICIT_TEMPLATE_INSTANTIATION_EXPORT
-#include "tao/StringSeq.pidl"
-#include "tao/LongSeq.pidl"
-
-#define HANDLE_TYPE_NATIVE long
-#define BUILTIN_TOPIC_KEY_TYPE_NATIVE long
-
 module DDS {
+    struct NativeInstanceHandle_t {
+        octet entityKey[8];
+    };
+    typedef long BUILTIN_TOPIC_KEY_TYPE_NATIVE;		
+   
 // Make the IDL compiler produce include of zero-copy read info
 // sequence template.
 #pragma DCPS_SUPPORT_ZERO_COPY_READ
-
     typedef sequence<string> StringSeq;
-    typedef HANDLE_TYPE_NATIVE    InstanceHandle_t;
+    typedef NativeInstanceHandle_t    InstanceHandle_t;
     typedef BUILTIN_TOPIC_KEY_TYPE_NATIVE BuiltinTopicKeyValue[3];
 
     typedef sequence<InstanceHandle_t> InstanceHandleSeq;
