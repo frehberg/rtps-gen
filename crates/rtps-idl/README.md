@@ -55,7 +55,16 @@ the the original OO background, the focus is put onto data structures, and ignor
 | readwrite attribute |  _NA_   | 
 | operation |  _NA_  | 
 
+## Credits
+The underlying parser-generator  being used is [PEST][pest-url]
 
+The original IDL-v4 grammar stems from [kpansky][idl-v4-grammar-url], and has been adapted for the needs of this project.
+
+The CDR Serde implementation will be the  [cdr-rs
+][cdr-rs-url] project at github.
 
 [licence-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [licence-url]: LICENSE.md
+[pest-url]: https://pest.rs/
+[idl-v4-grammar-url]: https://github.com/kpansky
+[cdr-rs-url]: https://github.com/hrektts/cdr-rs

@@ -10,6 +10,9 @@ keywords = ["RTPS", "DDS", "data-centric", "IDL", "generator"]
 documentation = "https://docs.rs/rtps-gen"
 homepage = "https://github.com/frehberg/rtps-gen.git"
 repository = "https://github.com/frehberg/rtps-gen.git"
+exclude = [
+    "docs/*",
+]
 
 [dependencies]
 log = { version = "0.4", features = ["std", "serde"] }
