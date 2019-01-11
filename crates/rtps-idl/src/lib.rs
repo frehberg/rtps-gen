@@ -8,7 +8,7 @@ use pest_idl_v4_grammar::{IdlParser, Rule};
 use std::collections::HashMap;
 use std::path::Path;
 use std::io::{Error, ErrorKind};
-use std::io::{self, Write, Read};
+use std::io::{Write, Read};
 use std::fs::File;
 
 use crate::ast::*;
@@ -24,6 +24,7 @@ pub enum IdlError {
     UnexpectedItem(Rule),
     ExpectedItem(Rule),
     ErrorMesg(String),
+    FileNotFound(String),
 }
 
 ///
@@ -63,16 +64,16 @@ type Scope = Vec<String>;
 
 ///
 #[derive(Debug, Clone)]
-struct ProcessData<'i> {
+struct Context<'i> {
     config: &'i Configuration,
     definitions: HashMap<String, String>,
     root_module: Box<IdlModule>,
 }
 
 
-impl<'i> ProcessData<'i> {
-    pub fn new(config: &'i Configuration) -> ProcessData {
-        ProcessData {
+impl<'i> Context<'i> {
+    pub fn new(config: &'i Configuration) -> Context {
+        Context {
             config: &config,
             definitions: HashMap::default(),
             root_module: Box::new(IdlModule::new(None, 0)),
@@ -116,6 +117,7 @@ impl<'i> ProcessData<'i> {
 
         Ok(())
     }
+
     // type_spec = { template_type_spec | simple_type_spec }
     pub fn read_type_spec(&mut self, scope: &mut Scope,
                           pair: &Pair<Rule>) -> Result<Box<IdlTypeSpec>, IdlError>
@@ -169,7 +171,7 @@ impl<'i> ProcessData<'i> {
                 _ => panic!(),
             },
 
-//  scoped_name = { "::"? ~ identifier ~ ("::" ~ identifier)* }
+            //  scoped_name = { "::"? ~ identifier ~ ("::" ~ identifier)* }
             Rule::scoped_name => {
                 let name = self.read_scoped_name(scope, pair)?;
                 Ok(Box::new(IdlTypeSpec::ScopedName(name)))
@@ -198,7 +200,7 @@ impl<'i> ProcessData<'i> {
             println!("should be declarator {:?}", decl.as_rule());
         }
         match decl.as_rule() {
-// simple_declarator = { identifier }
+            // simple_declarator = { identifier }
             Rule::simple_declarator => {
                 let id = self.read_identifier(scope, &iter.next().unwrap())?;
                 let member_dcl = Box::new(IdlStructMember {
@@ -235,11 +237,12 @@ impl<'i> ProcessData<'i> {
         }
     }
 
+
     // member = { type_spec ~ declarators ~ ";" }
     // declarators = { declarator ~ ("," ~ declarator )* }
     // declarator = { array_declarator | simple_declarator }
-    fn read_member(&mut self, scope: &mut Scope,
-                   pair: &Pair<Rule>) -> Result<Vec<Box<IdlStructMember>>, IdlError>
+    fn read_struct_member(&mut self, scope: &mut Scope,
+                          pair: &Pair<Rule>) -> Result<Vec<Box<IdlStructMember>>, IdlError>
     {
         let mut iter = pair.clone().into_inner();
         if self.config.verbose {
@@ -257,6 +260,7 @@ impl<'i> ProcessData<'i> {
 
         members
     }
+
 
     //
     fn read_identifier(&mut self, scope: &mut Scope,
@@ -282,7 +286,7 @@ impl<'i> ProcessData<'i> {
             print!("{:indent$}", "", indent = 3 * scope.len());
             println!(">>> {:?} '{}'", pair.as_rule(), pair.as_str());
         }
-// check if name starts with "::"
+        // check if name starts with "::"
         let is_absolute_name = pair.as_str().starts_with("::");
         let scoped_name = iter
             .map(|p| self.read_identifier(scope, &p).unwrap().to_owned())
@@ -456,7 +460,7 @@ impl<'i> ProcessData<'i> {
     }
 
     ///
-    pub fn process<L: IdlLoader>(&mut self, scope: &mut Scope,
+    pub fn process<L: IdlLoader>(&mut self, scope: &mut Scope, loader: &mut IdlLoader,
                                  pair: &Pair<Rule>) -> Result<(), IdlError>
     {
         let mut iter = pair.clone().into_inner();
@@ -474,7 +478,7 @@ impl<'i> ProcessData<'i> {
                 let _ = self.lookup_module(scope);
 
                 for p in iter {
-                    self.process::<L>(scope, &p);
+                    self.process::<L>(scope, loader, &p);
                 }
 
                 scope.pop();
@@ -488,7 +492,7 @@ impl<'i> ProcessData<'i> {
                 let key = id.clone();
                 let m1: Result<Vec<Vec<Box<IdlStructMember>>>, _> = iter.map(|p| {
                     // skip hte member-node and read sibbling directly
-                    self.read_member(scope, &p)
+                    self.read_struct_member(scope, &p)
                 }).collect();
 
                 let m2 = m1?;
@@ -496,8 +500,20 @@ impl<'i> ProcessData<'i> {
 
                 let typedcl = Box::new(IdlTypeDcl(IdlTypeDclKind::StructDcl(id,
                                                                             members)));
-                self.add_type_dcl(scope, key, typedcl);
-                Ok(())
+                self.add_type_dcl(scope, key, typedcl)
+            }
+
+            // union_def = { "union" ~ identifier ~ "switch" ~ "(" ~ switch_type_spec ~ ")" ~ "{" ~ switch_body ~ "}" }
+            Rule::union_def => {
+                let id = self.read_identifier(scope, &iter.next().unwrap())?;
+                let key = id.to_owned();
+                let switch_type_spec = self.read_switch_type_spec(scope, &iter.next().unwrap())?;
+                let switch_body = self.read_switch_body(scope, &iter.next().unwrap())?;
+                let union_def = Box::new(
+                    IdlTypeDcl(IdlTypeDclKind::UnionDcl(
+                        id, switch_type_spec, switch_body)));
+
+                self.add_type_dcl(scope, key, union_def)
             }
 
             // type_declarator = { (template_type_spec | constr_type_dcl | simple_type_spec) ~ any_declarators }
@@ -521,23 +537,183 @@ impl<'i> ProcessData<'i> {
                 let key = id.clone();
                 let const_expr = self.read_const_expr(scope, &iter.next().unwrap())?;
                 let const_dcl = Box::new(IdlConstDcl { id: id, typedcl: type_spec, value: const_expr });
-                self.add_const_dcl(scope, key, const_dcl);
+                self.add_const_dcl(scope, key, const_dcl)
+            }
+
+            // include_directive = !{ "#" ~ "include" ~ (("<" ~ path_spec ~ ">") | ("\"" ~ path_spec ~ "\"")) }
+            Rule::include_directive => {
+                match pair.clone().into_inner().nth(0) {
+                    Some(ref p) => {
+                        let fname = p.as_str();
+                        let data = loader.load(fname)
+                            .map_err(|err| IdlError::FileNotFound(fname.to_owned()))?;
+
+                        let idl: Pairs<Rule> =
+                            IdlParser::parse(Rule::specification, &data)
+                                .map_err(|e| IdlError::ErrorMesg(e.to_string()))?;
+
+                        for p in idl {
+                            self.process::<L>(scope, loader, &p)?;
+                        }
+                    },
+                    _ => {}
+                }
                 Ok(())
             }
 
-            //            // union_def = { "union" ~ identifier ~ "switch" ~ "(" ~ switch_type_spec ~ ")" ~ "{" ~ switch_body ~ "}" }
-            //            Rule::union_def => {
-            //
-            //            },
 
             // anything else
             _ => {
                 for p in iter {
-                    self.process::<L>(scope, &p);
+                    self.process::<L>(scope, loader, &p);
                 }
                 Ok(())
             }
         }
+    }
+
+    /// declarator = { array_declarator | simple_declarator }
+    /// array_declarator = { identifier ~ fixed_array_size+ }
+    /// simple_declarator = { identifier }
+    pub fn read_switch_element_declarator(&mut self, scope: &mut Scope,
+                                          pair: &Pair<Rule>, type_spec: &Box<IdlTypeSpec>)
+                                          -> Result<Box<IdlSwitchElement>, IdlError>
+    {
+        let decl = pair.clone().into_inner().next().unwrap();
+
+        let mut iter = decl.clone().into_inner();
+        if self.config.verbose {
+            print!("{:indent$}", "", indent = 3 * scope.len());
+            println!("should be declarator {:?}", decl.as_rule());
+        }
+        match decl.as_rule() {
+            // simple_declarator = { identifier }
+            Rule::simple_declarator => {
+                let id = self.read_identifier(scope, &iter.next().unwrap())?;
+                let member_dcl = Box::new(IdlSwitchElement {
+                    id: id,
+                    type_spec: type_spec.clone(),
+                });
+
+                Ok(member_dcl)
+            }
+
+            // array_declarator = { identifier ~ fixed_array_size+ }
+            Rule::array_declarator => {
+                let id = self.read_identifier(scope, &iter.next().unwrap())?;
+                let array_sizes: Result<Vec<_>, IdlError> =
+                    iter
+                        .map(|p|
+                            // skip node Rule::fixed_array_size and read const_expr underneath
+                            self.read_const_expr(
+                                scope,
+                                &p.clone().into_inner().next().unwrap()))
+                        .collect();
+                let array_type_spec =
+                    Box::new(IdlTypeSpec::ArrayType(type_spec.clone(), array_sizes?));
+
+                let member_dcl = Box::new(IdlSwitchElement {
+                    id: id,
+                    type_spec: array_type_spec,
+                });
+
+                Ok(member_dcl)
+            }
+
+            _ => Err(IdlError::InternalError)
+        }
+    }
+
+    /// element_spec = { type_spec ~ declarator }
+    fn read_switch_element_spec(&mut self, scope: &mut Scope,
+                                pair: &Pair<Rule>) -> Result<Box<IdlSwitchElement>, IdlError>
+    {
+        let mut iter = pair.clone().into_inner();
+        if self.config.verbose {
+            print!("{:indent$}", "", indent = 3 * scope.len());
+            println!("{:?}", pair.as_rule());
+        }
+        let type_spec: Box<IdlTypeSpec> = self.read_type_spec(scope, &iter.next().unwrap())?;
+
+        let element_spec =
+            self.read_switch_element_declarator(scope, &iter.next().unwrap(), &type_spec);
+
+        element_spec
+    }
+
+    /// switch_type_spec = {integer_type | char_type | boolean_type | wide_char_type| octet_type| scoped_name }
+    fn read_switch_type_spec(&mut self, scope: &mut Scope,
+                             pair: &Pair<Rule>) -> Result<Box<IdlTypeSpec>, IdlError>
+    {
+        let mut iter = pair.clone().into_inner();
+        if self.config.verbose {
+            print!("{:indent$}", "", indent = 3 * scope.len());
+            println!("{:?}", pair.as_rule());
+        }
+        self.read_type_spec(scope, &iter.next().unwrap())
+    }
+
+    /// switch_body = { case+ }
+    fn read_switch_body(&mut self, scope: &mut Scope,
+                        pair: &Pair<Rule>) -> Result<Vec<IdlSwitchCase>, IdlError>
+    {
+        let mut iter = pair.clone().into_inner();
+        if self.config.verbose {
+            print!("{:indent$}", "", indent = 3 * scope.len());
+            println!("{:?}", pair.as_rule());
+        }
+
+        let cases: Result<Vec<_>, IdlError> =
+            iter
+                .map(|p| self.read_switch_case(scope, &p))
+                .collect();
+
+        cases
+    }
+
+    /// case_label = { "case" ~ const_expr ~ ":" | "default" ~ ":" }
+    fn read_switch_label(&mut self, scope: &mut Scope,
+                         pair: &Pair<Rule>) -> Result<IdlSwitchLabel, IdlError>
+    {
+        let mut iter = pair.clone().into_inner();
+        if self.config.verbose {
+            print!("{:indent$}", "", indent = 3 * scope.len());
+            println!("{:?}", pair.as_rule());
+        }
+
+        match iter.next() {
+            Some(p) => {
+                let expr = self.read_const_expr(scope, &p)?;
+                Ok(IdlSwitchLabel::Label(expr))
+            }
+            _ => Ok(IdlSwitchLabel::Default)
+        }
+    }
+
+    /// case = { case_label+ ~ element_spec ~ ";" }
+    fn read_switch_case(&mut self, scope: &mut Scope,
+                        pair: &Pair<Rule>) -> Result<IdlSwitchCase, IdlError>
+    {
+        if self.config.verbose {
+            print!("{:indent$}", "", indent = 3 * scope.len());
+            println!("{:?}", pair.as_rule());
+        }
+
+        let case_labels: Result<Vec<IdlSwitchLabel>, IdlError> = pair.clone().into_inner()
+            .filter(|p| p.as_rule() == Rule::case_label)
+            .map(|p| self.read_switch_label(scope, &p))
+            .collect();
+
+        // there will be only one in the list, choose the last
+        let elem_spec: Result<Box<IdlSwitchElement>, IdlError> = pair.clone().into_inner()
+            .filter(|p| p.as_rule() == Rule::element_spec)
+            .map(|p| self.read_switch_element_spec(scope, &p))
+            .last().unwrap();
+
+        Ok(IdlSwitchCase {
+            labels: case_labels?,
+            elem_spec: elem_spec?,
+        })
     }
 }
 
@@ -550,7 +726,7 @@ pub fn generate_with_loader<W: Write, L: IdlLoader>(
     config: &Configuration,
     idldecl: &str) -> Result<(), IdlError> {
     const ROOT: &str = "";
-    let mut data = ProcessData::new(config);
+    let mut ctx = Context::new(config);
 
     let idl: Pairs<Rule> =
         IdlParser::parse(Rule::specification, &idldecl)
@@ -559,11 +735,11 @@ pub fn generate_with_loader<W: Write, L: IdlLoader>(
     let mut scope = Scope::new();
 
     for p in idl {
-        data.process::<L>(&mut scope, &p);
+        ctx.process::<L>(&mut scope, loader, &p);
     }
 
     out.write(MODULE_PRELUDE);
-    data.root_module.as_mut().write(out, 0).map_err(|err| IdlError::InternalError)
+    ctx.root_module.as_mut().write(out, 0).map_err(|err| IdlError::InternalError)
 }
 
 
@@ -607,8 +783,8 @@ impl IdlLoader for Loader {
 
 ///
 pub fn generate_with_search_path<W: Write>(out: &mut W, search_path: Vec<String>,
-                                            config: &Configuration, data: &str) -> Result<(), IdlError> {
+                                           config: &Configuration, data: &str) -> Result<(), IdlError> {
     let mut loader = Loader::new(search_path);
 
-    generate_with_loader( out, &mut loader, config, data)
+    generate_with_loader(out, &mut loader, config, data)
 }

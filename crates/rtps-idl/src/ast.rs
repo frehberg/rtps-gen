@@ -169,6 +169,46 @@ impl IdlStructMember {
 
 ///
 #[derive(Clone, Debug)]
+pub struct IdlSwitchElement {
+    pub id: String,
+    pub type_spec: Box<IdlTypeSpec>,
+}
+
+///
+impl IdlSwitchElement {
+    ///
+    pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
+        write!(out, "{:indent$}{}: ", "", self.id, indent = level * INDENTION);
+        self.type_spec.write(out);
+        writeln!(out, ",");
+        Ok(())
+    }
+}
+
+///
+#[derive(Clone, Debug)]
+pub enum IdlSwitchLabel {
+    Label(Box<IdlValueExpr>),
+    Default
+}
+
+///
+#[derive(Clone, Debug)]
+pub struct IdlSwitchCase {
+    pub labels: Vec<IdlSwitchLabel>,
+    pub elem_spec: Box<IdlSwitchElement>,
+}
+
+///
+impl IdlSwitchCase {
+    ///
+    pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
+        Ok(())
+    }
+}
+
+///
+#[derive(Clone, Debug)]
 pub enum IdlTypeSpec {
     None,
     ArrayType(Box<IdlTypeSpec>, Vec<Box<IdlValueExpr>>),
@@ -260,7 +300,7 @@ pub enum IdlTypeDclKind {
     None,
     TypeDcl(String, Box<IdlTypeSpec>),
     StructDcl(String, Vec<Box<IdlStructMember>>),
-    // UnionDcl(String, Vec<Box<IdlUnionMember>>),
+    UnionDcl(String, Box<IdlTypeSpec>, Vec<IdlSwitchCase>),
 }
 
 ///
@@ -304,6 +344,27 @@ impl IdlTypeDcl {
                     member.as_ref().write(out, level + 1);
                 }
                 let _ = writeln!(out, "{:indent$}{}", "", "}", indent = level * INDENTION);
+                Ok(())
+            }
+
+            IdlTypeDclKind::UnionDcl(ref id, ref type_spec, ref switch_cases) => {
+                let _ = writeln!(out, "");
+                let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_ALLOW_DEADCODE, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_ALLOW_NON_CAMEL_CASE_TYPES, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_SERDE, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_CLONE_DEBUG, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}pub enum {} {}", "", id, "{", indent = level * INDENTION);
+                for case in switch_cases {
+                    case.write(out, level + 1);
+                }
+                let _ = writeln!(out, "{:indent$}{}", "", "}", indent = level * INDENTION);
+
+                let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}// TODO custom de-/serializer", "", indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
+
                 Ok(())
             }
             _ => Ok(())

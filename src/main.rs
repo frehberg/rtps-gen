@@ -123,7 +123,7 @@ fn main() -> Result<(), std::io::Error> {
 
 #[cfg(test)]
 mod tests {
-    use rtps_idl::{generate_with_loader, Configuration};
+    use rtps_idl::{generate_with_search_path, Configuration};
     use super::Loader;
     use std::io::Cursor;
     use std::str;
@@ -140,11 +140,11 @@ use std::vec::Vec;
 
     fn generate_and_verify(expect: &[u8], input: &str) {
         let config = Configuration::default();
-        let mut loader = Loader::default();
+        let search_path = vec!["files/".to_owned()];
 
         // Create fake "file"
         let mut out = Cursor::new(Vec::new());
-        match generate_with_loader(&mut out, &mut loader, &config, input) {
+        match generate_with_search_path(&mut out, search_path, &config, input) {
             Ok(_) => (),
             Err(err) => {
                 eprint!("parse error {:?}", err);
@@ -576,6 +576,35 @@ const Foo: i32 = 2/1;\n");
 use serde_derive::{Serialize, Deserialize};
 #[allow(dead_code)]
 const Foo: i32 = 2%1;\n");
+
+        generate_and_verify(expect.as_ref(), IDL);
+    }
+
+    #[test]
+    fn include_directive() {
+        // including the file from project-directory "./files/"
+        const IDL: &str = r#"#include<simple.idl>"#;
+
+        let mut expect = MODULE_PRELUDE.to_owned();
+        expect.extend_from_slice(b"#[allow(unused_imports)]
+use serde_derive::{Serialize, Deserialize};
+#[allow(non_snake_case)]
+mod ModuleA {
+    #[allow(unused_imports)]
+    use serde_derive::{Serialize, Deserialize};
+
+    //
+    //
+    #[allow(dead_code)]
+    #[allow(non_camel_case_types)]
+    pub type dim1 = [i32;2];
+
+    //
+    //
+    #[allow(dead_code)]
+    #[allow(non_camel_case_types)]
+    pub type seq_long = Vec<i32>;
+}\n");
 
         generate_and_verify(expect.as_ref(), IDL);
     }
