@@ -13,8 +13,8 @@ use std::io::Read;
 use std::fs::File;
 
 // TODO: improve the generator and run over ../../files/dds/DdsDcpsDomain.idl
-const IDL_DIR: &str = "../../files";
-const IDL_INFILE: &str = "../../files/dds/DdsDcpsGuid.idl";
+const IDL_DIR: &str = "files";
+const IDL_INFILE: &str = "files/dds/DdsDcpsGuid.idl";
 const RUST_OUTFILE: &str = "DdsElements.rs";
 
 fn main() -> Result<(), Error> {
