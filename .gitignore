@@ -2,5 +2,6 @@
 **/*.rs.bk
 crates/rtps-elements/target
 crates/rtps-idl/target
+crates/rtps-idl-grammar/target
 /.idea
 Cargo.lock

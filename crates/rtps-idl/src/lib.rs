@@ -1,10 +1,14 @@
+// Copyright (C) 2019  Frank Rehberger
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0>
 extern crate linked_hash_map;
 
 mod ast;
 
 use pest::Parser;
 use pest::iterators::{Pair, Pairs};
-use pest_idl_v4_grammar::{IdlParser, Rule};
+use rtps_idl_grammar::{IdlParser, Rule};
 use std::collections::HashMap;
 use std::io::{Error, ErrorKind};
 use std::io::{Write, Read};

@@ -1,0 +1,53 @@
+// Line comment
+/*
+// Block comment
+*/
+#pragma example
+module m {
+
+    const char ccc = 't';
+    const short ccs = 0x0123;
+    const long ccl = 0x01234567;
+    const long long ccll = 0x0123456789ABCDEF;
+    const string ccst = "str";
+    const float ccf = 1234.56;
+    const double ccd = 1234.5678;
+    //const long double ccld = 1234.7891;
+    const boolean ccb = TRUE;
+    enum cce { cce_zero, cce_one, cce_two, cce_three };
+
+    union u switch (cce) {
+        case cce_zero: long x;
+        case cce_one: boolean y;
+    };
+
+    interface InheritableIfc {
+        any ne_op();
+    };
+
+    interface i : InheritableIfc {
+        double d_op(in double arg0, inout boolean arg1, out long long arg2);
+        oneway void ow_op(in float f);
+    };
+
+    struct StructDecl;
+
+    struct StructDecl {
+        octet o;
+        char c;
+        short s;
+        unsigned short us;
+        long l;
+        unsigned long ul;
+        long long ll;
+        unsigned long long ull;
+        float f;
+        double d;
+        long double ld;
+        cce e;
+    };
+    typedef sequence<StructDecl> StructDeclSequence;
+
+    const long ConstDecl = ccl * 0x1 & 2 >> ~2 | (02 ^ 3) * 3 % 2 + 2 - 1 / 3;
+
+};

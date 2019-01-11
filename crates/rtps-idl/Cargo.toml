@@ -13,6 +13,6 @@ repository = "https://github.com/frehberg/rtps-gen.git"
 
 [dependencies]
 pest = "^1.0"
-pest_idl_v4_grammar = { git = "https://github.com/frehberg/pest_idl_v4_grammar.git" }
+rtps-idl-grammar = { path = "../rtps-idl-grammar", version = "0.2.0" }
 log = { version = "0.4", features = ["std", "serde"] }
 linked-hash-map = "^0.5"

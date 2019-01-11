@@ -1,3 +1,7 @@
+// Copyright (C) 2019  Frank Rehberger
+//
+// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
+// http://www.apache.org/licenses/LICENSE-2.0>
 use linked_hash_map::LinkedHashMap;
 use std::io::Write;
 use std::io::Error;
