@@ -158,10 +158,10 @@ pub struct IdlStructMember {
 ///
 impl IdlStructMember {
     ///
-    pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
-        write!(out, "{:indent$}{}: ", "", self.id, indent = level * INDENTION)
+    pub fn write<W: Write>(&self, out: &mut W, _level: usize) -> Result<(), Error> {
+        write!(out, "{}: ", self.id)
             .and_then(|_| self.type_spec.write(out))
-            .and_then(|_| writeln!(out, ","))
+            .and_then(|_| write!(out, ","))
     }
 }
 
@@ -175,10 +175,10 @@ pub struct IdlSwitchElement {
 ///
 impl IdlSwitchElement {
     ///
-    pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
-        write!(out, "{:indent$}{}: ", "", self.id, indent = level * INDENTION)
+    pub fn write<W: Write>(&self, out: &mut W, _level: usize) -> Result<(), Error> {
+        write!(out, "{}: ", self.id)
             .and_then(|_| self.type_spec.write(out))
-            .and_then(|_| writeln!(out, ","))
+            .and_then(|_| write!(out, ","))
     }
 }
 
@@ -199,7 +199,21 @@ pub struct IdlSwitchCase {
 ///
 impl IdlSwitchCase {
     ///
-    pub fn write<W: Write>(&self, _: &mut W, _: usize) -> Result<(), Error> {
+    pub fn write<W: Write>(&self, out: &mut W, level: usize) -> Result<(), Error> {
+        for label in &self.labels {
+            match label {
+                IdlSwitchLabel::Label(ref val_expr) =>
+                    write!(out, "{:indent$}", "", indent = level * INDENTION)
+                        .and_then(|_| val_expr.write(out))
+                        .and_then(|_| write!(out, "{}", "{"))
+                        .and_then(|_| self.elem_spec.write(out, level + 1))
+                        .and_then(|_| writeln!(out, "{}", "},"))?,
+                IdlSwitchLabel::Default =>
+                    write!(out, "{:indent$}default{}", "", "{", indent = level * INDENTION)
+                        .and_then(|_| self.elem_spec.write(out, level + 1))
+                        .and_then(|_| writeln!(out, "{}", "},"))?,
+            }
+        }
         Ok(())
     }
 }
@@ -296,6 +310,7 @@ pub enum IdlTypeDclKind {
     TypeDcl(String, Box<IdlTypeSpec>),
     StructDcl(String, Vec<Box<IdlStructMember>>),
     UnionDcl(String, Box<IdlTypeSpec>, Vec<IdlSwitchCase>),
+    EnumDcl(String,  Vec<String>),
 }
 
 ///
@@ -338,7 +353,26 @@ impl IdlTypeDcl {
                 let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_CLONE_DEBUG, indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}pub struct {} {}", "", id, "{", indent = level * INDENTION);
                 for member in type_spec {
-                    let _ = member.as_ref().write(out, level + 1);
+                    let _ = write!(out, "{:indent$}", "", indent = (level +1) * INDENTION)
+                        .and_then(|_| member.as_ref().write(out, level + 1))
+                        .and_then(|_| writeln!(out));
+                }
+                let _ = writeln!(out, "{:indent$}{}", "", "}", indent = level * INDENTION);
+                Ok(())
+            }
+
+            IdlTypeDclKind::EnumDcl(ref id, ref enums) => {
+                // TODO collect/return result
+                let _ = writeln!(out, "");
+                let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}//", "", indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_ALLOW_DEADCODE, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_ALLOW_NON_CAMEL_CASE_TYPES, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_SERDE, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_CLONE_DEBUG, indent = level * INDENTION);
+                let _ = writeln!(out, "{:indent$}pub enum {} {}", "", id, "{", indent = level * INDENTION);
+                for variant in enums {
+                    let _ = writeln!(out, "{:indent$}{},", "", variant, indent = (level +1) * INDENTION);
                 }
                 let _ = writeln!(out, "{:indent$}{}", "", "}", indent = level * INDENTION);
                 Ok(())
@@ -424,7 +458,7 @@ impl IdlModule {
             Some(ref id_str) =>
                 writeln!(out, "{:indent$}{}", "",
                          ATTR_ALLOW_NON_SNAKE_CASE, indent = level * INDENTION)
-                    .and_then(|_| writeln!(out, "{:indent$}mod {} {}", "", id_str, "{", indent = level * INDENTION)),
+                    .and_then(|_| writeln!(out, "{:indent$}pub mod {} {}", "", id_str, "{", indent = level * INDENTION)),
 
             _ => write!(out, ""),
         };

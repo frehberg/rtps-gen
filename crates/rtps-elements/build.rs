@@ -14,8 +14,8 @@ use std::fs::File;
 
 // TODO: improve the generator and run over ../../files/dds/DdsDcpsDomain.idl
 const IDL_DIR: &str = "files";
-const IDL_INFILE: &str = "files/dds/DdsDcpsGuid.idl";
-const RUST_OUTFILE: &str = "DdsElements.rs";
+const IDL_INFILE: &str = "files/dds/DdsCollection.idl";
+const RUST_OUTFILE: &str = "DdsCollection.rs";
 
 fn main() -> Result<(), Error> {
     let out_dir = env::var("OUT_DIR").unwrap();

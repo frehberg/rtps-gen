@@ -1,16 +1,16 @@
 /*
  *
  *
- * Distributed under the OpenDDS License.
- * See: http://www.opendds.org/license.html
+ * Distributed under the Apache License.
+ * See: https://github.com/frehberg/rtps-gen/blob/master/LICENSE
  */
 
-#ifndef OPENDDS_DCPS_DATAREADERSEQ_IDL
-#define OPENDDS_DCPS_DATAREADERSEQ_IDL
+#ifndef DDS_DCPS_DATAREADERSEQ_IDL
+#define DDS_DCPS_DATAREADERSEQ_IDL
 
 module DDS {
     local interface DataReader;
     typedef sequence<DataReader> DataReaderSeq;
 };
 
-#endif  /* OPENDDS_DCPS_DATAREADERSEQ_IDL */
+#endif  /* DDS_DCPS_DATAREADERSEQ_IDL */

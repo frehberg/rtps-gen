@@ -1,0 +1,6 @@
+union Foo switch (long) {
+   case LABEL0: long l;
+   case LABEL1:
+   case LABEL2: short s;
+   default: octet o;
+};

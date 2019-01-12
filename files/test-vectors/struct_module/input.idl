@@ -1,0 +1,1 @@
+module A { struct Foo { long m_l1,m_l2; double m_d; }; };

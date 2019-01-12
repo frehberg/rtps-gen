@@ -1,12 +1,12 @@
 /*
  *
  *
- * Distributed under the OpenDDS License.
- * See: http://www.opendds.org/license.html
+ * Distributed under the Apache License.
+ * See: https://github.com/frehberg/rtps-gen/blob/master/LICENSE
  */
 
-#ifndef OPENDDS_DCPS_INFRASTRUCTURE_IDL
-#define OPENDDS_DCPS_INFRASTRUCTURE_IDL
+#ifndef DDS_DCPS_INFRASTRUCTURE_IDL
+#define DDS_DCPS_INFRASTRUCTURE_IDL
 
 #include "dds/DdsDcpsCore.idl"
 #include "dds/DdsDcpsConditionSeq.idl"
@@ -310,13 +310,13 @@ module DDS {
 
 };
 
-module OpenDDS
+module DDS
 {
   const string TRANSPORTTYPE_QOS_POLICY_NAME = "TransportType";
 
-  // OpenDDS-specific QosPolicyId_t values start from the maximum
+  // DDS-specific QosPolicyId_t values start from the maximum
   // QosPolicyId_t (a 32-bit signed integer) and decrement as new
-  // OpenDDS-specific values are added.  The goal is to avoid
+  // DDS-specific values are added.  The goal is to avoid
   // potential conflicts with new OMG defined QosPolicyId_t values.
   const ::DDS::QosPolicyId_t TRANSPORTTYPE_QOS_POLICY_ID = 0x7fffffff;
 
@@ -331,4 +331,4 @@ module OpenDDS
   };
 };
 
-#endif  /* OPENDDS_DCPS_INFRASTRUCTURE_IDL */
+#endif  /* DDS_DCPS_INFRASTRUCTURE_IDL */

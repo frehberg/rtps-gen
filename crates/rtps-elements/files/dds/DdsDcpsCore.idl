@@ -1,12 +1,12 @@
 /*
  *
  *
- * Distributed under the OpenDDS License.
- * See: http://www.opendds.org/license.html
+ * Distributed under the Apache License.
+ * See: https://github.com/frehberg/rtps-gen/blob/master/LICENSE
  */
 
-#ifndef OPENDDS_DCPS_CORE_IDL
-#define OPENDDS_DCPS_CORE_IDL
+#ifndef DDS_DCPS_CORE_IDL
+#define DDS_DCPS_CORE_IDL
 
 module DDS {
     struct NativeInstanceHandle_t {
@@ -257,7 +257,7 @@ module DDS {
 
     // ----------------------------------------------------------------------
 #if !defined (DDS_HAS_MINIMUM_BIT)
-// These pragmas are OpenDDS-specific.
+// These pragmas are DDS-specific.
 #pragma DCPS_DATA_TYPE "DDS::ParticipantBuiltinTopicData"
 #pragma DCPS_DATA_KEY  "DDS::ParticipantBuiltinTopicData key.value[0]"
 #pragma DCPS_DATA_KEY  "DDS::ParticipantBuiltinTopicData key.value[1]"
@@ -270,7 +270,7 @@ module DDS {
     };
 
 #if !defined (DDS_HAS_MINIMUM_BIT)
-// These pragmas are OpenDDS-specific.
+// These pragmas are DDS-specific.
 #pragma DCPS_DATA_TYPE "DDS::PublicationBuiltinTopicData"
 #pragma DCPS_DATA_KEY  "DDS::PublicationBuiltinTopicData key.value[0]"
 #pragma DCPS_DATA_KEY  "DDS::PublicationBuiltinTopicData key.value[1]"
@@ -299,7 +299,7 @@ module DDS {
                 };
 
 #if !defined (DDS_HAS_MINIMUM_BIT)
-// These pragmas are OpenDDS-specific.
+// These pragmas are DDS-specific.
 #pragma DCPS_DATA_TYPE "DDS::SubscriptionBuiltinTopicData"
 #pragma DCPS_DATA_KEY  "DDS::SubscriptionBuiltinTopicData key.value[0]"
 #pragma DCPS_DATA_KEY  "DDS::SubscriptionBuiltinTopicData key.value[1]"
@@ -326,7 +326,7 @@ module DDS {
                 };
 
 #if !defined (DDS_HAS_MINIMUM_BIT)
-// These pragmas are OpenDDS-specific.
+// These pragmas are DDS-specific.
 #pragma DCPS_DATA_TYPE "DDS::TopicBuiltinTopicData"
 #pragma DCPS_DATA_KEY  "DDS::TopicBuiltinTopicData key.value[0]"
 #pragma DCPS_DATA_KEY  "DDS::TopicBuiltinTopicData key.value[1]"
@@ -400,11 +400,10 @@ module DDS {
                 long generation_rank;
                 long absolute_generation_rank;
                 boolean valid_data;
-                long long opendds_reserved_publication_seq;
                 };
 
   typedef sequence<SampleInfo> SampleInfoSeq;
 
 };
 
-#endif  /* OPENDDS_DCPS_CORE_IDL */
+#endif  /* DDS_DCPS_CORE_IDL */

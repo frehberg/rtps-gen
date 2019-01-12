@@ -1,12 +1,12 @@
 /*
  *
  *
- * Distributed under the OpenDDS License.
- * See: http://www.opendds.org/license.html
+ * Distributed under the Apache License.
+ * See: https://github.com/frehberg/rtps-gen/blob/master/LICENSE
  */
 
-#ifndef OPENDDS_DCPS_DOMAIN_IDL
-#define OPENDDS_DCPS_DOMAIN_IDL
+#ifndef DDS_DCPS_DOMAIN_IDL
+#define DDS_DCPS_DOMAIN_IDL
 
 #include "dds/DdsDcpsInfrastructure.idl"
 #include "dds/DdsDcpsTopic.idl"
@@ -62,7 +62,7 @@ module DDS
     TopicDescription lookup_topicdescription(in string name);
 
 
-#ifndef OPENDDS_NO_CONTENT_FILTERED_TOPIC
+#ifndef DDS_NO_CONTENT_FILTERED_TOPIC
 
     ContentFilteredTopic create_contentfilteredtopic(
         in string name,
@@ -75,7 +75,7 @@ module DDS
 
 #endif
 
-#ifndef OPENDDS_NO_MULTI_TOPIC
+#ifndef DDS_NO_MULTI_TOPIC
 
     MultiTopic create_multitopic(
         in string name,
@@ -177,4 +177,4 @@ module DDS
   };
 };
 
-#endif /* OPENDDS_DCPS_DOMAIN_IDL */
+#endif /* DDS_DCPS_DOMAIN_IDL */

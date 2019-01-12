@@ -274,7 +274,7 @@ impl<'i> Context<'i> {
             println!("{:?}", pair.as_rule());
         }
         match pair.as_rule() {
-            Rule::identifier => Ok(pair.as_str().to_owned()),
+            Rule::identifier | Rule::enumerator=> Ok(pair.as_str().to_owned()),
             _ => Err(IdlError::ExpectedItem(Rule::identifier)),
         }
     }
@@ -539,6 +539,19 @@ impl<'i> Context<'i> {
                 Ok(())
             }
 
+            // enum_dcl = { "enum" ~ identifier ~ "{" ~ enumerator ~ ("," ~ enumerator)* ~ ","? ~ "}" }
+            // enumerator = { identifier }
+            Rule::enum_dcl => {
+                let id = iter.next().unwrap().as_str().to_owned();
+                let key = id.clone();
+                let enums: Result<Vec<_>, IdlError> =
+                    iter.map(|p| self.read_identifier(scope, &p))
+                        .collect();
+
+                let typedcl = Box::new(
+                    IdlTypeDcl(IdlTypeDclKind::EnumDcl(id, enums?)));
+                self.add_type_dcl(scope, key, typedcl)
+            }
             // const_dcl = { "const" ~ const_type ~ identifier ~ "=" ~ const_expr }
             Rule::const_dcl => {
                 let type_spec =
@@ -725,6 +738,9 @@ impl<'i> Context<'i> {
             elem_spec: elem_spec?,
         })
     }
+
+    // enum_dcl = { "enum" ~ identifier ~ "{" ~ enumerator ~ ("," ~ enumerator)* ~ ","? ~ "}" }
+    // enumerator = { identifier }
 }
 
 

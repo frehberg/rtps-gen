@@ -1,0 +1,1 @@
+typedef octet Foo[2][3+3];

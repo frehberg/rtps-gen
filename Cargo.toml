@@ -1,6 +1,6 @@
 [package]
 name = "rtps-gen"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Frank Rehberger <frehberg@gmail.com>"]
 edition = "2018"
 description = "A command line tool reading RTPS IDL and generating corresponding Rust data types."
@@ -16,9 +16,9 @@ exclude = [
 
 [dependencies]
 log = { version = "0.4", features = ["std", "serde"] }
-rtps-idl = { path = "crates/rtps-idl", version = "0.1.0" }
+rtps-idl = { path = "crates/rtps-idl", version = "0.2.0" }
 getopts = "0.2"
 
 [dev-dependencies]
 # TODO: should be dependency of rtps-message
-rtps-elements = { path = "crates/rtps-elements", version = "0.1.0" }
+rtps-elements = { path = "crates/rtps-elements", version = "0.2.0" }
