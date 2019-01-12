@@ -353,7 +353,7 @@ impl IdlTypeDcl {
                 let _ = writeln!(out, "{:indent$}{}", "", ATTR_DERIVE_CLONE_DEBUG, indent = level * INDENTION);
                 let _ = writeln!(out, "{:indent$}pub struct {} {}", "", id, "{", indent = level * INDENTION);
                 for member in type_spec {
-                    let _ = write!(out, "{:indent$}", "", indent = (level +1) * INDENTION)
+                    let _ = write!(out, "{:indent$}pub ", "", indent = (level +1) * INDENTION)
                         .and_then(|_| member.as_ref().write(out, level + 1))
                         .and_then(|_| writeln!(out));
                 }
@@ -420,7 +420,7 @@ impl IdlConstDcl {
     ///
     pub fn write<W: Write>(&mut self, out: &mut W, level: usize) -> Result<(), Error> {
         writeln!(out, "{:indent$}{}", "", ATTR_ALLOW_DEADCODE, indent = level * INDENTION)
-            .and_then(|_| write!(out, "{:indent$}const {}", "", self.id, indent = level * INDENTION))
+            .and_then(|_| write!(out, "{:indent$}pub const {}", "", self.id, indent = level * INDENTION))
             .and_then(|_| write!(out, ": "))
             .and_then(|_| self.typedcl.write(out))
             .and_then(|_| write!(out, " = "))
