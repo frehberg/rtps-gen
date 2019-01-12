@@ -77,13 +77,19 @@ the the original OO background, the focus is put onto data structures, and ignor
 
 | IDL | Rust |
 | ----- | ----- |
-| struct Foo {<br>&ensp;long l;<br>&ensp;short s;<br>} | pub struct Foo {<br>&ensp;l: i32,<br>&ensp;s: i16;<br>} |
+| struct Foo {<br>&ensp;long l;<br>&ensp;short s;<br>}; | pub struct Foo {<br>&ensp;pub l: i32,<br>&ensp;pub s: i16;<br>} |
+
+### Enum
+
+| IDL | Rust |
+| ----- | ----- |
+| enum Foo { VARIANT0, VARIANT1, VARIANT2 }; | pub enum Foo { VARIANT0, VARIANT1, VARIANT2, } |
 
 ### Union Switch
 
 | IDL | Rust |
 | ----- | ----- |
-| union Foo switch (long) {<br>&ensp;case LABEL0: long l;<br>&ensp;case LABEL1:<br>&ensp;case LABEL2: short s;<br>&ensp;default: octet o[8];<br>} | pub enum Foo {<br>&ensp;LABEL0{l: i32},<br>&ensp;LABEL2{s: i16},<br>&ensp;LABEL1{s: i16},<br>&ensp;default{o: [u8; 8]},<br>}  |
+| union Foo switch (long) {<br>&ensp;case LABEL0: long l;<br>&ensp;case LABEL1:<br>&ensp;case LABEL2: short s;<br>&ensp;default: octet o[8];<br>}; | pub enum Foo {<br>&ensp;LABEL0{l: i32},<br>&ensp;LABEL2{s: i16},<br>&ensp;LABEL1{s: i16},<br>&ensp;default{o: [u8; 8]},<br>}  |
 
 
 ## Credits

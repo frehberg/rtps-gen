@@ -48,5 +48,41 @@ the the original OO background, the focus is put onto data structures, and ignor
 | operation |  _NA_  | 
 
 
+## Mapping by examples
+
+## Templates
+
+| IDL | Rust |
+| ----- | ----- |
+| `sequence<octet>` | `std::vec::Vec<u8>` |
+
+### Typedef
+
+| IDL | Rust |
+| ----- | ----- |
+| typedef long Foo; | pub type Foo = i32; |
+| typedef short Foo[2]; | pub type Foo = [i16;2] |
+| typedef short Foo[2][3]; | pub type Foo = [[i16; 2]; 3] |
+| typedef sequence<octet> Foo; | pub type Foo = std::vec::Vec<u8> |
+
+### Struct
+
+| IDL | Rust |
+| ----- | ----- |
+| struct Foo {<br>&ensp;long l;<br>&ensp;short s;<br>}; | pub struct Foo {<br>&ensp;pub l: i32,<br>&ensp;pub s: i16;<br>} |
+
+### Enum
+
+| IDL | Rust |
+| ----- | ----- |
+| enum Foo { VARIANT0, VARIANT1, VARIANT2 }; | pub enum Foo { VARIANT0, VARIANT1, VARIANT2, } |
+
+### Union Switch
+
+| IDL | Rust |
+| ----- | ----- |
+| union Foo switch (long) {<br>&ensp;case LABEL0: long l;<br>&ensp;case LABEL1:<br>&ensp;case LABEL2: short s;<br>&ensp;default: octet o[8];<br>}; | pub enum Foo {<br>&ensp;LABEL0{l: i32},<br>&ensp;LABEL2{s: i16},<br>&ensp;LABEL1{s: i16},<br>&ensp;default{o: [u8; 8]},<br>}  |
+
+
 [licence-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg
 [licence-url]: LICENSE.md
