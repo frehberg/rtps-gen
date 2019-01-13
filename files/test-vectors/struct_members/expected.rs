@@ -10,7 +10,7 @@ use serde_derive::{Serialize, Deserialize};
 #[derive(Serialize, Deserialize)]
 #[derive(Clone, Debug)]
 pub struct Foo {
-    m_l1: i32,
-    m_l2: i32,
-    m_d: f64,
+    pub m_l1: i32,
+    pub m_l2: i32,
+    pub m_d: f64,
 }

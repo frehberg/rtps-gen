@@ -79,9 +79,12 @@ the the original OO background, the focus is put onto data structures, and ignor
 
 ### Union Switch
 
+Note: Only switch types "switch (long)" is supported yet.
+
 | IDL | Rust |
 | ----- | ----- |
 | union Foo switch (long) {<br>&ensp;case LABEL0: long l;<br>&ensp;case LABEL1:<br>&ensp;case LABEL2: short s;<br>&ensp;default: octet o[8];<br>}; | pub enum Foo {<br>&ensp;LABEL0{l: i32},<br>&ensp;LABEL2{s: i16},<br>&ensp;LABEL1{s: i16},<br>&ensp;default{o: [u8; 8]},<br>}  |
+| /* not yet, to be developed */<br>union Result switch (long) {<br>&ensp;case None: void _dummy;<br>&ensp;case Some: T t<br>}; | /* not yet, to be developed */<br>pub enum Result\<T> {<br>&ensp;None,<br>&ensp;Some(T),<br>}  |
 
 
 [licence-badge]: https://img.shields.io/badge/License-Apache%202.0-blue.svg

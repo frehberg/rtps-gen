@@ -272,12 +272,12 @@ mod tests {
 
     #[test]
     fn include_directive() {
-        testvector_verify("files/test-vectors/include_derictive/");
+        testvector_verify("files/test-vectors/include_directive/");
     }
 
     #[test]
     fn union_members() {
-        testvector_verify("files/test-vectors/union-members");
+        testvector_verify("files/test-vectors/union_members");
     }
 
     fn testvector_verify(testvector: &str) {
